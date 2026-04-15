@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>InspectPro – Maquinaria</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#f5a623">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="InspectPro">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f13;--surface:#17191f;--surface2:#1e2029;--border:#2a2d38;
+  --accent:#f5a623;--accent2:#e8431a;--text:#e8eaf0;--muted:#7a7f94;
+  --green:#2ecc71;--red:#e74c3c;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:2px solid var(--accent);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;color:var(--accent);}
+.logo span{color:var(--text);}
+header .badge{margin-left:auto;background:var(--accent2);color:#fff;font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:1px;}
+
+/* PWA install banner */
+#installBanner{display:none;background:linear-gradient(135deg,rgba(245,166,35,.15),rgba(232,67,26,.1));border:1px solid rgba(245,166,35,.3);border-radius:var(--radius);padding:12px 14px;margin:12px 16px 0;align-items:center;gap:10px;}
+#installBanner.show{display:flex;}
+#installBanner p{flex:1;font-size:.82rem;color:var(--text);}
+#installBanner p strong{color:var(--accent);}
+#installBanner .inst-btn{background:var(--accent);color:#0e0f13;border:none;border-radius:8px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;cursor:pointer;white-space:nowrap;}
+#installBanner .inst-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0 2px;}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);}
+.tab{flex:1;padding:11px 0;text-align:center;font-size:.75rem;font-weight:600;letter-spacing:.4px;color:var(--muted);cursor:pointer;transition:all .2s;border-bottom:3px solid transparent;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* SECTIONS */
+.section{display:none;padding:16px;}
+.section.active{display:block;}
+
+/* FORM */
+.form-section-title{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1.5px;color:var(--accent);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{margin-bottom:12px;}
+label{display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:5px;}
+.req{color:var(--accent2);}
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:76px;}
+select option{background:var(--surface2);}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
+
+/* DEFECTOS */
+.defectos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.defecto-item{display:flex;flex-direction:column;gap:4px;}
+.defecto-item label{font-size:.68rem;}
+.defecto-select{padding:8px 10px;font-size:.82rem;}
+.defecto-select.ok-val{border-color:var(--green);color:var(--green);}
+.defecto-select.nok-val{border-color:var(--red);color:var(--red);}
+
+/* FOTOS */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.photo-thumb{aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .del-btn{position:absolute;top:4px;right:4px;background:rgba(231,76,60,.85);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.add-photo-btn{aspect-ratio:1;border-radius:8px;border:2px dashed var(--border);background:var(--surface2);color:var(--muted);font-size:1.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.add-photo-btn:hover{border-color:var(--accent);color:var(--accent);}
+#photoInput{display:none;}
+
+/* STATUS */
+.status-row{display:flex;gap:8px;}
+.status-btn{flex:1;padding:10px 0;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
+.status-btn.ok.sel{border-color:var(--green);background:rgba(46,204,113,.12);color:var(--green);}
+.status-btn.warn.sel{border-color:var(--accent);background:rgba(245,166,35,.12);color:var(--accent);}
+.status-btn.fail.sel{border-color:var(--red);background:rgba(231,76,60,.12);color:var(--red);}
+
+/* BUTTONS */
+.btn{width:100%;padding:13px;border-radius:var(--radius);border:none;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;cursor:pointer;transition:all .2s;margin-top:8px;}
+.btn-primary{background:var(--accent);color:#0e0f13;}
+.btn-primary:hover{background:#f0b340;}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--muted);margin-top:4px;}
+.btn-outline:hover{border-color:var(--text);color:var(--text);}
+.btn-danger{background:transparent;border:2px solid var(--red);color:var(--red);}
+.btn-export{background:rgba(46,204,113,.12);border:2px solid var(--green);color:var(--green);}
+.btn-export:hover{background:rgba(46,204,113,.22);}
+
+/* SEARCH */
+.search-bar{position:relative;margin-bottom:10px;}
+.search-bar input{padding-left:36px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;transition:border .2s;}
+.card:hover{border-color:var(--accent);}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.card-id-badge{font-size:.68rem;font-weight:700;color:var(--accent);background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:6px;padding:2px 7px;margin-bottom:4px;display:inline-block;}
+.card-title{font-weight:600;font-size:.95rem;}
+.card-sub{font-size:.75rem;color:var(--muted);margin-top:3px;}
+.chip{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.chip-ok{background:rgba(46,204,113,.15);color:var(--green);border:1px solid var(--green);}
+.chip-warn{background:rgba(245,166,35,.15);color:var(--accent);border:1px solid var(--accent);}
+.chip-fail{background:rgba(231,76,60,.15);color:var(--red);border:1px solid var(--red);}
+.chip-nd{background:rgba(122,127,148,.15);color:var(--muted);border:1px solid var(--muted);}
+.defecto-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.defecto-chip{font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.3px;}
+.defecto-chip-ok{background:rgba(46,204,113,.1);color:var(--green);border:1px solid rgba(46,204,113,.4);}
+.defecto-chip-nok{background:rgba(231,76,60,.1);color:var(--red);border:1px solid rgba(231,76,60,.4);}
+.card-photos{display:flex;gap:6px;margin-top:10px;}
+.card-photos img{width:52px;height:52px;object-fit:cover;border-radius:6px;}
+.more-photos{width:52px;height:52px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;padding:16px;overflow-y:auto;}
+.modal-overlay.open{display:flex;align-items:flex-start;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;margin:auto;padding:20px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;color:var(--accent);}
+.modal hr{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.modal-section-lbl{font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:1.2px;color:var(--muted);margin-bottom:6px;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;font-size:.84rem;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.detail-label{color:var(--muted);flex-shrink:0;margin-right:12px;}
+.detail-val{text-align:right;word-break:break-word;}
+.detail-val-ok{color:var(--green);font-weight:600;}
+.detail-val-nok{color:var(--red);font-weight:600;}
+
+/* FOTO CARD en modal */
+.modal-photos{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+.foto-card{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.foto-card img{width:90px;height:90px;object-fit:cover;display:block;cursor:pointer;}
+.foto-card .dl-btn{position:absolute;bottom:0;left:0;right:0;background:rgba(14,15,19,.82);border:none;color:var(--accent);font-size:.65rem;font-weight:700;letter-spacing:.5px;padding:4px 0;cursor:pointer;text-align:center;}
+.foto-card .dl-btn:hover{background:rgba(245,166,35,.25);}
+
+/* MINI MODAL TIPO */
+.mini-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.mini-modal-overlay.open{display:flex;}
+.mini-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:340px;padding:20px;}
+.mini-modal h3{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:var(--accent);margin-bottom:12px;}
+.tipo-list{max-height:180px;overflow-y:auto;margin-bottom:10px;}
+.tipo-list-item{display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border);font-size:.85rem;}
+.tipo-list-item .del-tipo{background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem;padding:0 4px;}
+.tipo-list-item .default-lbl{font-size:.65rem;color:var(--muted);margin-left:4px;}
+.tipo-add-btn{background:var(--accent);color:#0e0f13;border:none;border-radius:var(--radius);padding:0 14px;font-weight:700;font-size:1.1rem;cursor:pointer;flex-shrink:0;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;}
+.stat-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;}
+
+/* EXPORT */
+.export-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.export-box-title{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px;}
+.date-filter-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.date-filter-row input{font-size:.82rem;padding:8px 10px;}
+.filter-count{font-size:.75rem;color:var(--muted);margin-top:6px;text-align:right;}
+.export-info{font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.6;}
+
+/* TOAST / EMPTY / LIGHTBOX */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 24px;border-radius:30px;font-weight:600;font-size:.85rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty .icon{font-size:3rem;margin-bottom:10px;}
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:600;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:95vw;max-height:78vh;border-radius:8px;object-fit:contain;}
+.lb-actions{display:flex;gap:10px;}
+.lb-actions button{border:none;border-radius:30px;padding:9px 20px;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1.5px;cursor:pointer;}
+.lb-dl{background:var(--accent);color:#0e0f13;}
+.lb-close{background:rgba(255,255,255,.1);color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Inspect<span>Pro</span></div>
+  <div class="badge">MAQUINARIA</div>
+</header>
+
+<!-- Banner instalación PWA -->
+<div id="installBanner">
+  <p><strong>📲 Instalar app</strong><br>Añade InspectPro a tu pantalla de inicio para usarla sin conexión.</p>
+  <button class="inst-btn" id="installBtn">INSTALAR</button>
+  <button class="inst-close" id="installClose">✕</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('nueva')">＋ Nueva</div>
+  <div class="tab" onclick="switchTab('lista')">📋 Lista</div>
+  <div class="tab" onclick="switchTab('resumen')">📊 Resumen</div>
+  <div class="tab" onclick="switchTab('exportar')">⬇ Export</div>
+</div>
+
+<!-- ══════════ NUEVA ══════════ -->
+<div id="tab-nueva" class="section active">
+  <div class="form-section-title">🔩 Identificación de la Máquina</div>
+  <div class="form-row2">
+    <div class="form-group">
+      <label>ID Máquina <span class="req">*</span></label>
+      <input type="text" id="idMaquina" placeholder="Ej: MAQ-001">
+    </div>
+    <div class="form-group">
+      <label>Nº de Serie</label>
+      <input type="text" id="nSerie" placeholder="Ej: SN-20481">
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Modelo / Fabricante</label>
+    <input type="text" id="modeloFabricante" placeholder="Ej: Atlas Copco GA90">
+  </div>
+  <div class="form-row2">
+    <div class="form-group">
+      <label>Año Fabricación</label>
+      <input type="number" id="anioFab" placeholder="Ej: 2018" min="1900" max="2099">
+    </div>
+    <div class="form-group">
+      <label>Fecha Inspección <span class="req">*</span></label>
+      <input type="date" id="fechaInsp">
+    </div>
+  </div>
+
+  <div class="form-section-title">📂 Clasificación</div>
+  <div class="form-group">
+    <label>Tipo de Maquinaria
+      <button onclick="abrirGestorTipos()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:.75rem;margin-left:6px;text-decoration:underline;">＋ Gestionar tipos</button>
+    </label>
+    <select id="tipo"></select>
+  </div>
+  <div class="form-row2">
+    <div class="form-group">
+      <label>Ubicación / Área</label>
+      <input type="text" id="ubicacion" placeholder="Ej: Nave 3">
+    </div>
+    <div class="form-group">
+      <label>Inspector</label>
+      <input type="text" id="inspector" placeholder="Nombre">
+    </div>
+  </div>
+
+  <div class="form-section-title">⚠ Defectos Detectados</div>
+  <div class="defectos-grid">
+    <div class="defecto-item">
+      <label>A · Defectos Mecánicos</label>
+      <select id="defA" class="defecto-select" onchange="colorDefecto(this)">
+        <option value="">— Sin evaluar —</option>
+        <option value="ok">✔ OK</option>
+        <option value="nok">✘ No OK</option>
+      </select>
+    </div>
+    <div class="defecto-item">
+      <label>B · Defectos Mandos</label>
+      <select id="defB" class="defecto-select" onchange="colorDefecto(this)">
+        <option value="">— Sin evaluar —</option>
+        <option value="ok">✔ OK</option>
+        <option value="nok">✘ No OK</option>
+      </select>
+    </div>
+    <div class="defecto-item">
+      <label>C · Defectos Advertencias</label>
+      <select id="defC" class="defecto-select" onchange="colorDefecto(this)">
+        <option value="">— Sin evaluar —</option>
+        <option value="ok">✔ OK</option>
+        <option value="nok">✘ No OK</option>
+      </select>
+    </div>
+    <div class="defecto-item">
+      <label>D · Defecto Intempestivo</label>
+      <select id="defD" class="defecto-select" onchange="colorDefecto(this)">
+        <option value="">— Sin evaluar —</option>
+        <option value="ok">✔ OK</option>
+        <option value="nok">✘ No OK</option>
+      </select>
+    </div>
+    <div class="defecto-item" style="grid-column:1/-1">
+      <label>E · Defecto Instrucciones</label>
+      <select id="defE" class="defecto-select" onchange="colorDefecto(this)">
+        <option value="">— Sin evaluar —</option>
+        <option value="ok">✔ OK</option>
+        <option value="nok">✘ No OK</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-section-title">📋 Resultado General</div>
+  <div class="form-group">
+    <label>Estado General</label>
+    <div class="status-row">
+      <div class="status-btn ok"   onclick="selectStatus('ok')">✔ Correcto</div>
+      <div class="status-btn warn" onclick="selectStatus('warn')">⚠ Atención</div>
+      <div class="status-btn fail" onclick="selectStatus('fail')">✘ Fallo</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Observaciones</label>
+    <textarea id="obs" placeholder="Describe incidencias, anomalías o notas…"></textarea>
+  </div>
+  <div class="form-group">
+    <label>Fotografías</label>
+    <div class="photo-grid" id="photoGrid"></div>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" multiple>
+  </div>
+  <button class="btn btn-primary" onclick="guardarInspeccion()">💾 GUARDAR INSPECCIÓN</button>
+  <button class="btn btn-outline" onclick="limpiarForm()">↺ LIMPIAR</button>
+</div>
+
+<!-- ══════════ LISTA ══════════ -->
+<div id="tab-lista" class="section">
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Buscar por ID, modelo, serie…" oninput="renderLista()">
+  </div>
+  <div id="listaContainer"></div>
+</div>
+
+<!-- ══════════ RESUMEN ══════════ -->
+<div id="tab-resumen" class="section">
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="section-title">Últimas Inspecciones</div>
+  <div id="recentList"></div>
+</div>
+
+<!-- ══════════ EXPORTAR ══════════ -->
+<div id="tab-exportar" class="section">
+  <div class="export-box">
+    <div class="export-box-title">📅 Filtro por Fecha de Inspección</div>
+    <div class="date-filter-row">
+      <div><label>Desde</label><input type="date" id="expDesde" onchange="updateExportCount()"></div>
+      <div><label>Hasta</label><input type="date" id="expHasta" onchange="updateExportCount()"></div>
+    </div>
+    <div class="filter-count" id="exportCount">— registros seleccionados</div>
+  </div>
+  <button class="btn btn-export" onclick="exportarCSV()">⬇ DESCARGAR CSV</button>
+  <button class="btn btn-outline" onclick="limpiarFiltroExport()">↺ VER TODOS</button>
+  <div class="export-info">
+    El CSV incluye todos los campos de identificación, los 5 defectos y el estado.<br>
+    Compatible con Excel, Google Sheets y cualquier hoja de cálculo.<br>
+    Las fotografías se descargan individualmente desde el detalle de cada inspección.
+  </div>
+</div>
+
+<!-- ══════════ MODAL DETALLE ══════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOverlay(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- ══════════ MINI MODAL TIPOS ══════════ -->
+<div class="mini-modal-overlay" id="tiposOverlay" onclick="closeTiposOverlay(event)">
+  <div class="mini-modal">
+    <h3>⚙ Tipos de Maquinaria</h3>
+    <div class="tipo-list" id="tipoList"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <input type="text" id="nuevoTipoInput" placeholder="Nuevo tipo…" style="flex:1;padding:8px 10px;font-size:.85rem;" onkeydown="if(event.key==='Enter')agregarTipo()">
+      <button class="tipo-add-btn" onclick="agregarTipo()">＋</button>
+    </div>
+    <button class="btn btn-outline" style="margin-top:10px;padding:10px;" onclick="cerrarGestorTipos()">CERRAR</button>
+  </div>
+</div>
+
+<!-- ══════════ LIGHTBOX ══════════ -->
+<div id="lightbox">
+  <img id="lbImg" src="" alt="Foto inspección">
+  <div class="lb-actions">
+    <button class="lb-dl" onclick="descargarFotoLightbox()">⬇ DESCARGAR JPG</button>
+    <button class="lb-close" onclick="closeLightbox()">✕ CERRAR</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════
+   REGISTRO SERVICE WORKER (PWA)
+═══════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) { console.log('SW registrado:', reg.scope); })
+      .catch(function(err) { console.warn('SW error:', err); });
+  });
+}
+
+/* ═══════════════════════════════════
+   BANNER INSTALACIÓN PWA
+═══════════════════════════════════ */
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', function() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function() {
+    deferredPrompt = null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+});
+document.getElementById('installClose').addEventListener('click', function() {
+  document.getElementById('installBanner').classList.remove('show');
+});
+window.addEventListener('appinstalled', function() {
+  document.getElementById('installBanner').classList.remove('show');
+  showToast('✔ App instalada correctamente');
+});
+
+/* ═══════════════════════════════════
+   CONSTANTES
+═══════════════════════════════════ */
+var DB_KEY   = 'inspectpro_v2';
+var DB_META  = DB_KEY + '_meta';
+var DB_TIPOS = DB_KEY + '_tipos';
+
+var DEFECTOS = [
+  {id:'defA', label:'A · Defectos Mecánicos'},
+  {id:'defB', label:'B · Defectos Mandos'},
+  {id:'defC', label:'C · Defectos Advertencias'},
+  {id:'defD', label:'D · Defecto Intempestivo'},
+  {id:'defE', label:'E · Defecto Instrucciones'}
+];
+
+var TIPOS_DEFAULT = [
+  'Compresor','Generador','Bomba hidráulica','Torno',
+  'Fresadora','Grúa','Carretilla elevadora','Motor eléctrico','Otro'
+];
+
+var fotos = [];
+var selectedStatus = '';
+var lbCurrentSrc = '';
+var lbCurrentName = 'foto';
+
+/* ═══════════════════════════════════
+   TIPOS DE MAQUINARIA
+═══════════════════════════════════ */
+function getTipos() {
+  try {
+    var s = JSON.parse(localStorage.getItem(DB_TIPOS));
+    return (s && s.length) ? s : TIPOS_DEFAULT.slice();
+  } catch(e) { return TIPOS_DEFAULT.slice(); }
+}
+function saveTipos(arr) { localStorage.setItem(DB_TIPOS, JSON.stringify(arr)); }
+
+function buildTipoSelect() {
+  var sel = document.getElementById('tipo');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Seleccionar…</option>';
+  getTipos().forEach(function(t) {
+    var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+function abrirGestorTipos() { renderTipoList(); document.getElementById('tiposOverlay').classList.add('open'); }
+function cerrarGestorTipos() { document.getElementById('tiposOverlay').classList.remove('open'); buildTipoSelect(); }
+function closeTiposOverlay(e) { if (e.target===document.getElementById('tiposOverlay')) cerrarGestorTipos(); }
+function renderTipoList() {
+  var tipos = getTipos();
+  var c = document.getElementById('tipoList');
+  if (!tipos.length) { c.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:8px 0">Sin tipos</div>'; return; }
+  c.innerHTML = tipos.map(function(t,i){
+    var isDef = TIPOS_DEFAULT.indexOf(t)!==-1;
+    return '<div class="tipo-list-item"><span>'+escHtml(t)+(isDef?'<span class="default-lbl">(predefinido)</span>':'')+'</span>'+
+      (!isDef?'<button class="del-tipo" onclick="eliminarTipo('+i+')">🗑</button>':'<span style="width:28px"></span>')+'</div>';
+  }).join('');
+}
+function agregarTipo() {
+  var inp = document.getElementById('nuevoTipoInput'), val = inp.value.trim();
+  if (!val) return;
+  var tipos = getTipos();
+  if (tipos.indexOf(val)!==-1) { showToast('Ese tipo ya existe','#e8431a'); return; }
+  tipos.push(val); saveTipos(tipos); inp.value=''; renderTipoList(); showToast('Tipo añadido: '+val);
+}
+function eliminarTipo(i) { var t=getTipos(); t.splice(i,1); saveTipos(t); renderTipoList(); }
+
+/* ═══════════════════════════════════
+   DEFECTOS
+═══════════════════════════════════ */
+function colorDefecto(sel) {
+  sel.classList.remove('ok-val','nok-val');
+  if (sel.value==='ok') sel.classList.add('ok-val');
+  else if (sel.value==='nok') sel.classList.add('nok-val');
+}
+function leerDefectos() {
+  var o={};
+  DEFECTOS.forEach(function(d){ o[d.id]=document.getElementById(d.id).value||''; });
+  return o;
+}
+function resetDefectos() {
+  DEFECTOS.forEach(function(d){ var el=document.getElementById(d.id); el.value=''; el.classList.remove('ok-val','nok-val'); });
+}
+
+/* ═══════════════════════════════════
+   ALMACENAMIENTO
+═══════════════════════════════════ */
+function saveMeta(m) {
+  try { localStorage.setItem(DB_META, JSON.stringify(m)); return true; }
+  catch(e) { showToast('⚠ Sin espacio en el dispositivo','#e8431a'); return false; }
+}
+function getMeta() { try { return JSON.parse(localStorage.getItem(DB_META))||[]; } catch(e){ return []; } }
+function saveFotos(id,arr) {
+  deleteFotos(id);
+  arr.forEach(function(b,i){ try{ localStorage.setItem(DB_KEY+'_f_'+id+'_'+i,b); }catch(e){} });
+}
+function loadFotos(id) {
+  var r=[],i=0,v;
+  while((v=localStorage.getItem(DB_KEY+'_f_'+id+'_'+i))!==null){ r.push(v); i++; }
+  return r;
+}
+function deleteFotos(id) {
+  var i=0;
+  while(localStorage.getItem(DB_KEY+'_f_'+id+'_'+i)!==null){ localStorage.removeItem(DB_KEY+'_f_'+id+'_'+i); i++; }
+}
+function countFotos(id) { var i=0; while(localStorage.getItem(DB_KEY+'_f_'+id+'_'+i)!==null)i++; return i; }
+
+/* ═══════════════════════════════════
+   COMPRESIÓN
+═══════════════════════════════════ */
+function comprimirImagen(dataUrl,maxSize,quality){
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      if(w>maxSize||h>maxSize){ if(w>=h){h=Math.round(h*maxSize/w);w=maxSize;}else{w=Math.round(w*maxSize/h);h=maxSize;} }
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=function(){ resolve(dataUrl); };
+    img.src=dataUrl;
+  });
+}
+document.getElementById('photoInput').addEventListener('change',function(e){
+  Array.from(e.target.files).forEach(function(f){
+    var reader=new FileReader();
+    reader.onload=function(ev){ comprimirImagen(ev.target.result,800,0.65).then(function(c){ fotos.push(c); renderFotos(); }); };
+    reader.readAsDataURL(f);
+  });
+  this.value='';
+});
+function renderFotos(){
+  var grid=document.getElementById('photoGrid'); grid.innerHTML='';
+  fotos.forEach(function(src,i){
+    var d=document.createElement('div'); d.className='photo-thumb';
+    var img=document.createElement('img'); img.src=src;
+    img.addEventListener('click',function(){ openLightbox(src,'foto_nueva_'+(i+1)); });
+    var btn=document.createElement('button'); btn.className='del-btn'; btn.textContent='✕';
+    btn.addEventListener('click',function(){ deletePhoto(i); });
+    d.appendChild(img); d.appendChild(btn); grid.appendChild(d);
+  });
+  var add=document.createElement('div'); add.className='add-photo-btn'; add.innerHTML='＋';
+  add.onclick=function(){ document.getElementById('photoInput').click(); };
+  grid.appendChild(add);
+}
+function deletePhoto(i){ fotos.splice(i,1); renderFotos(); }
+
+/* ═══════════════════════════════════
+   TABS / STATUS
+═══════════════════════════════════ */
+function switchTab(t){
+  var names=['nueva','lista','resumen','exportar'];
+  document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',names[i]===t); });
+  document.querySelectorAll('.section').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='lista') renderLista();
+  if(t==='resumen') renderResumen();
+  if(t==='exportar'){ initExportDates(); updateExportCount(); }
+}
+function selectStatus(s){
+  selectedStatus=s;
+  document.querySelectorAll('.status-btn').forEach(function(b){ b.classList.remove('sel'); });
+  document.querySelector('.status-btn.'+s).classList.add('sel');
+}
+
+/* ═══════════════════════════════════
+   GUARDAR / LIMPIAR
+═══════════════════════════════════ */
+function guardarInspeccion(){
+  var idMaquina=document.getElementById('idMaquina').value.trim();
+  var fechaInsp=document.getElementById('fechaInsp').value;
+  if(!idMaquina){ showToast('⚠ Indica el ID de la máquina','#e8431a'); return; }
+  if(!fechaInsp){ showToast('⚠ Indica la fecha de inspección','#e8431a'); return; }
+  var nuevo={
+    id:Date.now(), fechaGuardado:new Date().toLocaleString('es-ES'),
+    idMaquina:idMaquina, nSerie:document.getElementById('nSerie').value.trim(),
+    modeloFabricante:document.getElementById('modeloFabricante').value.trim(),
+    anioFab:document.getElementById('anioFab').value, fechaInsp:fechaInsp,
+    tipo:document.getElementById('tipo').value,
+    ubicacion:document.getElementById('ubicacion').value.trim(),
+    inspector:document.getElementById('inspector').value.trim(),
+    defectos:leerDefectos(), estado:selectedStatus||'nd',
+    obs:document.getElementById('obs').value.trim(), fotos:[]
+  };
+  var meta=getMeta(), metaNuevo=Object.assign({},nuevo);
+  meta.unshift(metaNuevo);
+  if(!saveMeta(meta)) return;
+  saveFotos(nuevo.id,fotos.slice());
+  showToast('✔ Inspección guardada ('+meta.length+' total)');
+  limpiarForm();
+}
+function limpiarForm(){
+  ['idMaquina','nSerie','modeloFabricante','anioFab','ubicacion','inspector','obs'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('tipo').value='';
+  try{ document.getElementById('fechaInsp').valueAsDate=new Date(); }catch(e){}
+  selectedStatus='';
+  document.querySelectorAll('.status-btn').forEach(function(b){ b.classList.remove('sel'); });
+  resetDefectos(); fotos=[]; renderFotos();
+}
+
+/* ═══════════════════════════════════
+   LISTA
+═══════════════════════════════════ */
+function renderLista(){
+  var q=(document.getElementById('searchInput')?document.getElementById('searchInput').value:'').toLowerCase();
+  var meta=getMeta();
+  var filtered=q?meta.filter(function(r){
+    return (r.idMaquina||'').toLowerCase().includes(q)||(r.modeloFabricante||'').toLowerCase().includes(q)||
+           (r.nSerie||'').toLowerCase().includes(q)||(r.ubicacion||'').toLowerCase().includes(q);
+  }):meta;
+  var c=document.getElementById('listaContainer');
+  if(!filtered.length){
+    c.innerHTML='<div class="empty"><div class="icon">🔧</div><p>'+(q?'Sin resultados para "'+escHtml(q)+'"':'No hay inspecciones aún.<br>Crea una nueva.')+'</p></div>';
+    return;
+  }
+  var html='';
+  filtered.forEach(function(r){
+    var nF=countFotos(r.id), thumbs=nF>0?loadFotos(r.id).slice(0,3):[];
+    var fotHtml='';
+    if(thumbs.length){ fotHtml='<div class="card-photos">'; thumbs.forEach(function(s){fotHtml+='<img src="'+s+'">';}); if(nF>3)fotHtml+='<div class="more-photos">+'+(nF-3)+'</div>'; fotHtml+='</div>'; }
+    var defHtml='';
+    if(r.defectos){ var dh=''; DEFECTOS.forEach(function(d){ var v=r.defectos[d.id]; if(v)dh+='<span class="defecto-chip '+(v==='ok'?'defecto-chip-ok':'defecto-chip-nok')+'">'+d.label.split('·')[0].trim()+': '+(v==='ok'?'OK':'No OK')+'</span>'; }); if(dh)defHtml='<div class="defecto-chips">'+dh+'</div>'; }
+    html+='<div class="card" onclick="openModalById('+r.id+')">'+'<div class="card-header"><div style="flex:1;min-width:0">'+'<div class="card-id-badge">'+escHtml(r.idMaquina)+'</div>'+'<div class="card-title">'+escHtml(r.modeloFabricante||r.tipo||'—')+'</div>'+'<div class="card-sub">Serie: '+escHtml(r.nSerie||'—')+' · Año: '+escHtml(r.anioFab||'—')+'</div>'+'<div class="card-sub">📍 '+escHtml(r.ubicacion||'—')+' · 🗓 '+escHtml(r.fechaInsp||'—')+'</div>'+'</div><div class="chip '+chipClass(r.estado)+'">'+estadoLabel(r.estado)+'</div></div>'+defHtml+fotHtml+'</div>';
+  });
+  c.innerHTML=html;
+}
+
+/* ═══════════════════════════════════
+   HELPERS
+═══════════════════════════════════ */
+function chipClass(e){ return {ok:'chip-ok',warn:'chip-warn',fail:'chip-fail',nd:'chip-nd'}[e]||'chip-nd'; }
+function estadoLabel(e){ return {ok:'OK',warn:'Atención',fail:'Fallo',nd:'N/D'}[e]||'N/D'; }
+function defLabel(v){ return v==='ok'?'OK':v==='nok'?'No OK':'—'; }
+function defClass(v){ return v==='ok'?'detail-val-ok':v==='nok'?'detail-val-nok':''; }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ═══════════════════════════════════
+   MODAL DETALLE
+═══════════════════════════════════ */
+function openModalById(id){
+  var meta=getMeta(), r=null;
+  for(var i=0;i<meta.length;i++){ if(meta[i].id===id){r=meta[i];break;} }
+  if(!r) return;
+  var fots=loadFotos(id);
+  var defHtml='';
+  DEFECTOS.forEach(function(d){ var v=(r.defectos&&r.defectos[d.id])?r.defectos[d.id]:''; defHtml+='<div class="detail-row"><span class="detail-label">'+escHtml(d.label)+'</span><span class="detail-val '+defClass(v)+'">'+defLabel(v)+'</span></div>'; });
+  var fotHtml='';
+  if(fots.length){
+    fotHtml='<hr><div class="modal-section-lbl">FOTOGRAFÍAS ('+fots.length+') — toca para ampliar o descargar</div><div class="modal-photos">';
+    fots.forEach(function(s,i){
+      var nombre=(r.idMaquina||'insp')+'_foto'+(i+1)+'_'+(r.fechaInsp||'').replace(/-/g,'');
+      fotHtml+='<div class="foto-card"><img src="'+s+'" onclick="openLightbox(\''+s+'\',\''+nombre+'\')"><button class="dl-btn" onclick="descargarFoto(\''+s+'\',\''+nombre+'\')">⬇ JPG</button></div>';
+    });
+    fotHtml+='</div>';
+  }
+  document.getElementById('modalContent').innerHTML=
+    '<div class="modal-title">'+escHtml(r.idMaquina)+'</div>'+
+    '<div style="margin-top:6px"><span class="chip '+chipClass(r.estado)+'">'+estadoLabel(r.estado)+'</span></div>'+
+    '<hr><div class="modal-section-lbl">🔩 IDENTIFICACIÓN</div>'+
+    '<div class="detail-row"><span class="detail-label">ID Máquina</span><span class="detail-val">'+escHtml(r.idMaquina||'—')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Nº Serie</span><span class="detail-val">'+escHtml(r.nSerie||'—')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Modelo / Fabricante</span><span class="detail-val">'+escHtml(r.modeloFabricante||'—')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Año Fabricación</span><span class="detail-val">'+escHtml(r.anioFab||'—')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Fecha Inspección</span><span class="detail-val">'+escHtml(r.fechaInsp||'—')+'</span></div>'+
+    '<hr><div class="modal-section-lbl">📂 CLASIFICACIÓN</div>'+
+    '<div class="detail-row"><span class="detail-label">Tipo</span><span class="detail-val">'+escHtml(r.tipo||'—')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Ubicación</span><span class="detail-val">'+escHtml(r.ubicacion||'—')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Inspector</span><span class="detail-val">'+escHtml(r.inspector||'—')+'</span></div>'+
+    '<hr><div class="modal-section-lbl">⚠ DEFECTOS</div>'+defHtml+
+    '<hr><div class="modal-section-lbl">📋 RESULTADO</div>'+
+    '<div class="detail-row"><span class="detail-label">Estado General</span><span class="detail-val chip '+chipClass(r.estado)+'">'+estadoLabel(r.estado)+'</span></div>'+
+    (r.obs?'<div style="font-size:.85rem;color:var(--text);line-height:1.5;margin-top:8px">'+escHtml(r.obs)+'</div>':'')+
+    '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Guardado</span><span class="detail-val">'+escHtml(r.fechaGuardado||'—')+'</span></div>'+
+    fotHtml+'<hr>'+
+    '<button class="btn btn-danger" onclick="eliminarInspeccion('+r.id+')">🗑 ELIMINAR INSPECCIÓN</button>'+
+    '<button class="btn btn-outline" onclick="document.getElementById(\'modalOverlay\').classList.remove(\'open\')">CERRAR</button>';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModalOverlay(e){ if(e.target===document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); }
+function eliminarInspeccion(id){
+  if(!confirm('¿Eliminar esta inspección? No se puede deshacer.')) return;
+  saveMeta(getMeta().filter(function(r){return r.id!==id;}));
+  deleteFotos(id);
+  document.getElementById('modalOverlay').classList.remove('open');
+  renderLista();
+  showToast('Inspección eliminada','#e74c3c');
+}
+
+/* ═══════════════════════════════════
+   RESUMEN
+═══════════════════════════════════ */
+function renderResumen(){
+  var meta=getMeta();
+  var ok=meta.filter(function(r){return r.estado==='ok';}).length;
+  var warn=meta.filter(function(r){return r.estado==='warn';}).length;
+  var fail=meta.filter(function(r){return r.estado==='fail';}).length;
+  document.getElementById('statsGrid').innerHTML=
+    '<div class="stat-card"><div class="stat-num" style="color:var(--text)">'+meta.length+'</div><div class="stat-lbl">Total</div></div>'+
+    '<div class="stat-card"><div class="stat-num" style="color:var(--green)">'+ok+'</div><div class="stat-lbl">Correctas</div></div>'+
+    '<div class="stat-card"><div class="stat-num" style="color:var(--accent)">'+warn+'</div><div class="stat-lbl">Atención</div></div>'+
+    '<div class="stat-card"><div class="stat-num" style="color:var(--red)">'+fail+'</div><div class="stat-lbl">Fallos</div></div>';
+  document.getElementById('recentList').innerHTML=meta.slice(0,5).length?
+    meta.slice(0,5).map(function(r){
+      return '<div class="card" style="margin-bottom:8px"><div class="card-header"><div>'+'<div class="card-id-badge">'+escHtml(r.idMaquina)+'</div>'+'<div class="card-title">'+escHtml(r.modeloFabricante||r.tipo||'—')+'</div>'+'<div class="card-sub">🗓 '+escHtml(r.fechaInsp||'—')+' · '+escHtml(r.inspector||'—')+'</div>'+'</div><div class="chip '+chipClass(r.estado)+'">'+estadoLabel(r.estado)+'</div></div></div>';
+    }).join(''):'<div class="empty"><p>Sin datos aún</p></div>';
+}
+
+/* ═══════════════════════════════════
+   EXPORT CSV
+═══════════════════════════════════ */
+function initExportDates(){
+  var meta=getMeta(); if(!meta.length) return;
+  var fechas=meta.map(function(r){return r.fechaInsp||'';}).filter(Boolean).sort();
+  if(fechas.length){
+    if(!document.getElementById('expDesde').value) document.getElementById('expDesde').value=fechas[0];
+    if(!document.getElementById('expHasta').value) document.getElementById('expHasta').value=fechas[fechas.length-1];
+  }
+}
+function getFilteredMeta(){
+  var meta=getMeta(), desde=document.getElementById('expDesde').value, hasta=document.getElementById('expHasta').value;
+  return meta.filter(function(r){ var f=r.fechaInsp||''; if(desde&&f<desde)return false; if(hasta&&f>hasta)return false; return true; });
+}
+function updateExportCount(){ var n=getFilteredMeta().length; document.getElementById('exportCount').textContent=n+' registro'+(n===1?'':'s')+' seleccionado'+(n===1?'':'s'); }
+function limpiarFiltroExport(){ document.getElementById('expDesde').value=''; document.getElementById('expHasta').value=''; updateExportCount(); }
+function csvCell(v){ var s=String(v===null||v===undefined?'':v); if(s.indexOf('"')!==-1||s.indexOf(',')!==-1||s.indexOf('\n')!==-1)s='"'+s.replace(/"/g,'""')+'"'; return s; }
+function exportarCSV(){
+  var data=getFilteredMeta();
+  if(!data.length){ showToast('⚠ No hay registros con ese filtro','#e8431a'); return; }
+  var headers=['ID Máquina','Nº Serie','Modelo/Fabricante','Año Fabricación','Fecha Inspección','Tipo','Ubicación','Inspector','A·Def.Mecánicos','B·Def.Mandos','C·Def.Advertencias','D·Def.Intempestivo','E·Def.Instrucciones','Estado General','Observaciones','Fecha Guardado'];
+  var lines=[headers.map(csvCell).join(',')];
+  data.forEach(function(r){ var d=r.defectos||{}; lines.push([r.idMaquina||'',r.nSerie||'',r.modeloFabricante||'',r.anioFab||'',r.fechaInsp||'',r.tipo||'',r.ubicacion||'',r.inspector||'',defLabel(d.defA),defLabel(d.defB),defLabel(d.defC),defLabel(d.defD),defLabel(d.defE),estadoLabel(r.estado),r.obs||'',r.fechaGuardado||''].map(csvCell).join(',')); });
+  var csv='\uFEFF'+lines.join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='inspecciones_'+(document.getElementById('expDesde').value||'todo')+'_'+(document.getElementById('expHasta').value||'todo')+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('✔ CSV descargado ('+data.length+' registros)');
+}
+
+/* ═══════════════════════════════════
+   DESCARGA DE FOTOS JPG
+═══════════════════════════════════ */
+function descargarFoto(src, nombre){
+  var a=document.createElement('a');
+  a.href=src;
+  a.download=(nombre||'foto')+'.jpg';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('⬇ Foto descargada');
+}
+
+/* ═══════════════════════════════════
+   LIGHTBOX CON DESCARGA
+═══════════════════════════════════ */
+function openLightbox(src, nombre){
+  lbCurrentSrc=src; lbCurrentName=nombre||'foto';
+  document.getElementById('lbImg').src=src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
+function descargarFotoLightbox(){ descargarFoto(lbCurrentSrc, lbCurrentName); }
+
+/* ═══════════════════════════════════
+   TOAST
+═══════════════════════════════════ */
+function showToast(msg,color){
+  var t=document.getElementById('toast'); t.textContent=msg; t.style.background=color||'#2ecc71';
+  t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2800);
+}
+
+/* ═══════════════════════════════════
+   INIT
+═══════════════════════════════════ */
+buildTipoSelect();
+try{ document.getElementById('fechaInsp').valueAsDate=new Date(); }catch(e){}
+renderFotos();
+</script>
+</body>
+</html>
