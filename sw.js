@@ -3,7 +3,7 @@
    Versión de caché: actualiza CACHE_NAME
    para forzar refresco en todos los clientes
 ═══════════════════════════════════════════ */
-var CACHE_NAME = 'inspectpro-v1';
+var CACHE_NAME = 'inspectpro-v2';
 
 var ASSETS = [
   './',
