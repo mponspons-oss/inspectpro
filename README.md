@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/26981880/README.md)
 # InspectPro – App PWA de Inspección de Maquinaria
 
 App web progresiva (PWA) para registrar inspecciones de maquinaria industrial.
