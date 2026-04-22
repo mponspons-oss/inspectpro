@@ -5,15 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>InspectPro – Maquinaria</title>
 
-<!-- PWA -->
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#f5a623">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="InspectPro">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
-
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -29,14 +20,6 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
 .logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;color:var(--accent);}
 .logo span{color:var(--text);}
 header .badge{margin-left:auto;background:var(--accent2);color:#fff;font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:1px;}
-
-/* PWA install banner */
-#installBanner{display:none;background:linear-gradient(135deg,rgba(245,166,35,.15),rgba(232,67,26,.1));border:1px solid rgba(245,166,35,.3);border-radius:var(--radius);padding:12px 14px;margin:12px 16px 0;align-items:center;gap:10px;}
-#installBanner.show{display:flex;}
-#installBanner p{flex:1;font-size:.82rem;color:var(--text);}
-#installBanner p strong{color:var(--accent);}
-#installBanner .inst-btn{background:var(--accent);color:#0e0f13;border:none;border-radius:8px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;cursor:pointer;white-space:nowrap;}
-#installBanner .inst-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0 2px;}
 
 /* TABS */
 .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);}
@@ -185,13 +168,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   <div class="badge">MAQUINARIA</div>
 </header>
 
-<!-- Banner instalación PWA -->
-<div id="installBanner">
-  <p><strong>📲 Instalar app</strong><br>Añade InspectPro a tu pantalla de inicio para usarla sin conexión.</p>
-  <button class="inst-btn" id="installBtn">INSTALAR</button>
-  <button class="inst-close" id="installClose">✕</button>
-</div>
-
 <div class="tabs">
   <div class="tab active" onclick="switchTab('nueva')">＋ Nueva</div>
   <div class="tab" onclick="switchTab('lista')">📋 Lista</div>
@@ -199,7 +175,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   <div class="tab" onclick="switchTab('exportar')">⬇ Export</div>
 </div>
 
-<!-- ══════════ NUEVA ══════════ -->
+<!-- --- NUEVA --- -->
 <div id="tab-nueva" class="section active">
   <div class="form-section-title">🔩 Identificación de la Máquina</div>
   <div class="form-row2">
@@ -311,7 +287,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   <button class="btn btn-outline" onclick="limpiarForm()">↺ LIMPIAR</button>
 </div>
 
-<!-- ══════════ LISTA ══════════ -->
+<!-- --- LISTA --- -->
 <div id="tab-lista" class="section">
   <div class="search-bar">
     <span class="search-icon">🔍</span>
@@ -320,14 +296,14 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   <div id="listaContainer"></div>
 </div>
 
-<!-- ══════════ RESUMEN ══════════ -->
+<!-- --- RESUMEN --- -->
 <div id="tab-resumen" class="section">
   <div class="stats-grid" id="statsGrid"></div>
   <div class="section-title">Últimas Inspecciones</div>
   <div id="recentList"></div>
 </div>
 
-<!-- ══════════ EXPORTAR ══════════ -->
+<!-- --- EXPORTAR --- -->
 <div id="tab-exportar" class="section">
 
   <!-- COPIA DE SEGURIDAD -->
@@ -374,12 +350,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   </div>
 </div>
 
-<!-- ══════════ MODAL DETALLE ══════════ -->
+<!-- --- MODAL DETALLE --- -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOverlay(event)">
   <div class="modal" id="modalContent"></div>
 </div>
 
-<!-- ══════════ MINI MODAL TIPOS ══════════ -->
+<!-- --- MINI MODAL TIPOS --- -->
 <div class="mini-modal-overlay" id="tiposOverlay" onclick="closeTiposOverlay(event)">
   <div class="mini-modal">
     <h3>⚙ Tipos de Maquinaria</h3>
@@ -392,7 +368,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   </div>
 </div>
 
-<!-- ══════════ LIGHTBOX ══════════ -->
+<!-- --- LIGHTBOX --- -->
 <div id="lightbox">
   <img id="lbImg" src="" alt="Foto inspección">
   <div class="lb-actions">
@@ -404,45 +380,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
 <div class="toast" id="toast"></div>
 
 <script>
-/* ═══════════════════════════════════
-   REGISTRO SERVICE WORKER (PWA)
-═══════════════════════════════════ */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js')
-      .then(function(reg) { console.log('SW registrado:', reg.scope); })
-      .catch(function(err) { console.warn('SW error:', err); });
-  });
-}
+/* InspectPro v3 - Sin PWA, máxima compatibilidad */
 
-/* ═══════════════════════════════════
-   BANNER INSTALACIÓN PWA
-═══════════════════════════════════ */
-var deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('installBanner').classList.add('show');
-});
-document.getElementById('installBtn').addEventListener('click', function() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(function() {
-    deferredPrompt = null;
-    document.getElementById('installBanner').classList.remove('show');
-  });
-});
-document.getElementById('installClose').addEventListener('click', function() {
-  document.getElementById('installBanner').classList.remove('show');
-});
-window.addEventListener('appinstalled', function() {
-  document.getElementById('installBanner').classList.remove('show');
-  showToast('✔ App instalada correctamente');
-});
-
-/* ═══════════════════════════════════
+/* /* 
    CONSTANTES
-═══════════════════════════════════ */
+ */
 var DB_KEY   = 'inspectpro_v2';
 var DB_META  = DB_KEY + '_meta';
 var DB_TIPOS = DB_KEY + '_tipos';
@@ -465,9 +407,9 @@ var selectedStatus = '';
 var lbCurrentSrc = '';
 var lbCurrentName = 'foto';
 
-/* ═══════════════════════════════════
+/* /* 
    TIPOS DE MAQUINARIA
-═══════════════════════════════════ */
+ */
 function getTipos() {
   try {
     var s = JSON.parse(localStorage.getItem(DB_TIPOS));
@@ -507,9 +449,9 @@ function agregarTipo() {
 }
 function eliminarTipo(i) { var t=getTipos(); t.splice(i,1); saveTipos(t); renderTipoList(); }
 
-/* ═══════════════════════════════════
+/* /* 
    DEFECTOS
-═══════════════════════════════════ */
+ */
 function colorDefecto(sel) {
   sel.classList.remove('ok-val','nok-val');
   if (sel.value==='ok') sel.classList.add('ok-val');
@@ -524,9 +466,9 @@ function resetDefectos() {
   DEFECTOS.forEach(function(d){ var el=document.getElementById(d.id); el.value=''; el.classList.remove('ok-val','nok-val'); });
 }
 
-/* ═══════════════════════════════════
+/* /* 
    ALMACENAMIENTO
-═══════════════════════════════════ */
+ */
 function saveMeta(m) {
   try { localStorage.setItem(DB_META, JSON.stringify(m)); return true; }
   catch(e) { showToast('⚠ Sin espacio en el dispositivo','#e8431a'); return false; }
@@ -547,9 +489,9 @@ function deleteFotos(id) {
 }
 function countFotos(id) { var i=0; while(localStorage.getItem(DB_KEY+'_f_'+id+'_'+i)!==null)i++; return i; }
 
-/* ═══════════════════════════════════
+/* /* 
    COMPRESIÓN
-═══════════════════════════════════ */
+ */
 function comprimirImagen(dataUrl,maxSize,quality){
   return new Promise(function(resolve){
     var img=new Image();
@@ -588,9 +530,9 @@ function renderFotos(){
 }
 function deletePhoto(i){ fotos.splice(i,1); renderFotos(); }
 
-/* ═══════════════════════════════════
+/* /* 
    TABS / STATUS
-═══════════════════════════════════ */
+ */
 function switchTab(t){
   var names=['nueva','lista','resumen','exportar'];
   document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',names[i]===t); });
@@ -606,9 +548,9 @@ function selectStatus(s){
   document.querySelector('.status-btn.'+s).classList.add('sel');
 }
 
-/* ═══════════════════════════════════
+/* /* 
    GUARDAR / LIMPIAR
-═══════════════════════════════════ */
+ */
 function guardarInspeccion(){
   var idMaquina=document.getElementById('idMaquina').value.trim();
   var fechaInsp=document.getElementById('fechaInsp').value;
@@ -641,9 +583,9 @@ function limpiarForm(){
   resetDefectos(); fotos=[]; renderFotos();
 }
 
-/* ═══════════════════════════════════
+/* /* 
    LISTA
-═══════════════════════════════════ */
+ */
 function renderLista(){
   var q=(document.getElementById('searchInput')?document.getElementById('searchInput').value:'').toLowerCase();
   var meta=getMeta();
@@ -668,18 +610,18 @@ function renderLista(){
   c.innerHTML=html;
 }
 
-/* ═══════════════════════════════════
+/* /* 
    HELPERS
-═══════════════════════════════════ */
+ */
 function chipClass(e){ return {ok:'chip-ok',warn:'chip-warn',fail:'chip-fail',nd:'chip-nd'}[e]||'chip-nd'; }
 function estadoLabel(e){ return {ok:'OK',warn:'Atención',fail:'Fallo',nd:'N/D'}[e]||'N/D'; }
 function defLabel(v){ return v==='ok'?'OK':v==='nok'?'No OK':'—'; }
 function defClass(v){ return v==='ok'?'detail-val-ok':v==='nok'?'detail-val-nok':''; }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ═══════════════════════════════════
+/* /* 
    MODAL DETALLE
-═══════════════════════════════════ */
+ */
 function openModalById(id){
   var meta=getMeta(), r=null;
   for(var i=0;i<meta.length;i++){ if(meta[i].id===id){r=meta[i];break;} }
@@ -721,7 +663,7 @@ function openModalById(id){
 }
 function closeModalOverlay(e){ if(e.target===document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); }
 function eliminarInspeccion(id){
-  if(!confirm('¿Eliminar esta inspección? No se puede deshacer.')) return;
+  if(!confirm('Eliminar esta inspeccion? No se puede deshacer.')) return;
   saveMeta(getMeta().filter(function(r){return r.id!==id;}));
   deleteFotos(id);
   document.getElementById('modalOverlay').classList.remove('open');
@@ -729,9 +671,9 @@ function eliminarInspeccion(id){
   showToast('Inspección eliminada','#e74c3c');
 }
 
-/* ═══════════════════════════════════
+/* /* 
    RESUMEN
-═══════════════════════════════════ */
+ */
 function renderResumen(){
   var meta=getMeta();
   var ok=meta.filter(function(r){return r.estado==='ok';}).length;
@@ -748,9 +690,9 @@ function renderResumen(){
     }).join(''):'<div class="empty"><p>Sin datos aún</p></div>';
 }
 
-/* ═══════════════════════════════════
+/* /* 
    EXPORT CSV
-═══════════════════════════════════ */
+ */
 function initExportDates(){
   var meta=getMeta(); if(!meta.length) return;
   var fechas=meta.map(function(r){return r.fechaInsp||'';}).filter(Boolean).sort();
@@ -780,9 +722,9 @@ function exportarCSV(){
   showToast('✔ CSV descargado ('+data.length+' registros)');
 }
 
-/* ═══════════════════════════════════
+/* /* 
    DESCARGA DE FOTOS JPG
-═══════════════════════════════════ */
+ */
 function descargarFoto(src, nombre){
   var a=document.createElement('a');
   a.href=src;
@@ -791,9 +733,9 @@ function descargarFoto(src, nombre){
   showToast('⬇ Foto descargada');
 }
 
-/* ═══════════════════════════════════
+/* /* 
    LIGHTBOX CON DESCARGA
-═══════════════════════════════════ */
+ */
 function openLightbox(src, nombre){
   lbCurrentSrc=src; lbCurrentName=nombre||'foto';
   document.getElementById('lbImg').src=src;
@@ -802,9 +744,9 @@ function openLightbox(src, nombre){
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
 function descargarFotoLightbox(){ descargarFoto(lbCurrentSrc, lbCurrentName); }
 
-/* ═══════════════════════════════════
+/* /* 
    COPIA DE SEGURIDAD COMPLETA
-═══════════════════════════════════ */
+ */
 function exportarBackup(){
   var meta = getMeta();
   if(!meta.length){ showToast('⚠ No hay datos que exportar','#e8431a'); return; }
@@ -849,9 +791,7 @@ function restaurarBackup(input){
       if(!backup.version || backup.version.indexOf('inspectpro') === -1){
         showToast('⚠ Archivo no válido o no es de InspectPro','#e8431a'); return;
       }
-      if(!confirm('¿Restaurar ' + backup.total + ' inspecciones?
-
-Esto reemplazará todos los datos actuales. Esta acción no se puede deshacer.')){
+      if(!confirm('Restaurar ' + backup.total + ' inspecciones? Se reemplazaran todos los datos actuales.')){
         input.value=''; return;
       }
 
@@ -894,17 +834,17 @@ function actualizarInfoBackup(){
   el.textContent = meta.length + ' inspecciones · ' + nFotos + ' fotos almacenadas';
 }
 
-/* ═══════════════════════════════════
+/* /* 
    TOAST
-═══════════════════════════════════ */
+ */
 function showToast(msg,color){
   var t=document.getElementById('toast'); t.textContent=msg; t.style.background=color||'#2ecc71';
   t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2800);
 }
 
-/* ═══════════════════════════════════
+/* /* 
    INIT
-═══════════════════════════════════ */
+ */
 buildTipoSelect();
 try{ document.getElementById('fechaInsp').valueAsDate=new Date(); }catch(e){}
 renderFotos();
