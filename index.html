@@ -329,8 +329,37 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
 
 <!-- ══════════ EXPORTAR ══════════ -->
 <div id="tab-exportar" class="section">
+
+  <!-- COPIA DE SEGURIDAD -->
+  <div class="export-box" style="border-color:rgba(245,166,35,.5);">
+    <div class="export-box-title">🔒 Copia de Seguridad Completa</div>
+    <div class="export-info" style="margin-bottom:10px;color:var(--text);">
+      Exporta <strong>todos los datos y fotografías</strong> en un único archivo
+      <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;">inspectpro_backup_FECHA.json</code>
+      que se guarda en tu carpeta <strong>Descargas</strong>.
+      Úsalo para restaurar tus datos en cualquier momento o en otro dispositivo.
+    </div>
+    <button class="btn btn-primary" style="margin-top:0" onclick="exportarBackup()">📦 EXPORTAR COPIA DE SEGURIDAD</button>
+    <div class="filter-count" id="backupCount" style="margin-top:6px;text-align:left"></div>
+  </div>
+
+  <!-- RESTAURAR -->
+  <div class="export-box" style="border-color:rgba(46,204,113,.4);margin-top:12px;">
+    <div class="export-box-title" style="color:var(--green)">♻ Restaurar desde Copia de Seguridad</div>
+    <div class="export-info" style="margin-bottom:10px;color:var(--text);">
+      Selecciona un archivo <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;">.json</code>
+      generado previamente por InspectPro.
+      <span style="color:var(--red);font-weight:600;">⚠ Los datos actuales serán reemplazados.</span>
+    </div>
+    <input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restaurarBackup(this)">
+    <button class="btn btn-export" style="margin-top:0" onclick="document.getElementById('restoreInput').click()">📂 SELECCIONAR ARCHIVO .JSON</button>
+  </div>
+
+  <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
+
+  <!-- CSV -->
   <div class="export-box">
-    <div class="export-box-title">📅 Filtro por Fecha de Inspección</div>
+    <div class="export-box-title">📊 Exportar CSV (solo datos, sin fotos)</div>
     <div class="date-filter-row">
       <div><label>Desde</label><input type="date" id="expDesde" onchange="updateExportCount()"></div>
       <div><label>Hasta</label><input type="date" id="expHasta" onchange="updateExportCount()"></div>
@@ -341,8 +370,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);}
   <button class="btn btn-outline" onclick="limpiarFiltroExport()">↺ VER TODOS</button>
   <div class="export-info">
     El CSV incluye todos los campos de identificación, los 5 defectos y el estado.<br>
-    Compatible con Excel, Google Sheets y cualquier hoja de cálculo.<br>
-    Las fotografías se descargan individualmente desde el detalle de cada inspección.
+    Compatible con Excel, Google Sheets y cualquier hoja de cálculo.
   </div>
 </div>
 
@@ -775,6 +803,98 @@ function closeLightbox(){ document.getElementById('lightbox').classList.remove('
 function descargarFotoLightbox(){ descargarFoto(lbCurrentSrc, lbCurrentName); }
 
 /* ═══════════════════════════════════
+   COPIA DE SEGURIDAD COMPLETA
+═══════════════════════════════════ */
+function exportarBackup(){
+  var meta = getMeta();
+  if(!meta.length){ showToast('⚠ No hay datos que exportar','#e8431a'); return; }
+
+  // Recopilar cada registro con sus fotos incluidas
+  var registros = meta.map(function(r){
+    var obj = Object.assign({}, r);
+    obj.fotos = loadFotos(r.id);
+    return obj;
+  });
+
+  var backup = {
+    version: 'inspectpro_v2',
+    fecha: new Date().toISOString(),
+    total: registros.length,
+    tipos: getTipos(),
+    registros: registros
+  };
+
+  var json = JSON.stringify(backup);
+  var blob = new Blob([json], {type:'application/json;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var hoy = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href = url;
+  a.download = 'inspectpro_backup_' + hoy + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  var nFotos = registros.reduce(function(s,r){ return s + (r.fotos ? r.fotos.length : 0); }, 0);
+  showToast('✔ Backup exportado: ' + registros.length + ' registros, ' + nFotos + ' fotos');
+  actualizarInfoBackup();
+}
+
+function restaurarBackup(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      var backup = JSON.parse(e.target.result);
+      if(!backup.version || backup.version.indexOf('inspectpro') === -1){
+        showToast('⚠ Archivo no válido o no es de InspectPro','#e8431a'); return;
+      }
+      if(!confirm('¿Restaurar ' + backup.total + ' inspecciones?
+
+Esto reemplazará todos los datos actuales. Esta acción no se puede deshacer.')){
+        input.value=''; return;
+      }
+
+      // Borrar datos actuales
+      var metaActual = getMeta();
+      metaActual.forEach(function(r){ deleteFotos(r.id); });
+      localStorage.removeItem(DB_META);
+      localStorage.removeItem(DB_TIPOS);
+
+      // Restaurar tipos
+      if(backup.tipos && backup.tipos.length) saveTipos(backup.tipos);
+
+      // Restaurar registros y fotos
+      var metaNueva = backup.registros.map(function(r){
+        var fotsArr = r.fotos || [];
+        saveFotos(r.id, fotsArr);
+        var meta = Object.assign({}, r);
+        meta.fotos = [];
+        return meta;
+      });
+      saveMeta(metaNueva);
+
+      buildTipoSelect();
+      actualizarInfoBackup();
+      input.value = '';
+      showToast('✔ Restaurado: ' + metaNueva.length + ' inspecciones');
+    } catch(err) {
+      showToast('⚠ Error al leer el archivo','#e8431a');
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function actualizarInfoBackup(){
+  var el = document.getElementById('backupCount');
+  if(!el) return;
+  var meta = getMeta();
+  var nFotos = meta.reduce(function(s,r){ return s + countFotos(r.id); }, 0);
+  el.textContent = meta.length + ' inspecciones · ' + nFotos + ' fotos almacenadas';
+}
+
+/* ═══════════════════════════════════
    TOAST
 ═══════════════════════════════════ */
 function showToast(msg,color){
@@ -788,6 +908,7 @@ function showToast(msg,color){
 buildTipoSelect();
 try{ document.getElementById('fechaInsp').valueAsDate=new Date(); }catch(e){}
 renderFotos();
+actualizarInfoBackup();
 </script>
 </body>
 </html>
